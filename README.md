@@ -1,1 +1,1 @@
-# Poker-sim-for-training-SOLID
+# BlackJack-sim-for-training-SOLID
