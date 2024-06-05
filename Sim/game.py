@@ -116,11 +116,14 @@ class BlackJackGame(SGame):
     
     # 1 step of game
     def itterate(self):
+        
+        # TODO: add split support and add player turns
+        
         if self.__roll == self.__player_count:
-            self.__roll = 0
             # round up the last game: reveal delers card, check for win and push, clear all hands
             
             # TODO play the dealers cards
+            
             self.__dealer_hand.add_to_hand(self.__game_deck.reveal_dealer())
             dealer_total = self.__dealer_hand.get_cards()[:1]
             for i in range(self.__player_count):
@@ -148,13 +151,34 @@ class BlackJackGame(SGame):
                 self.__player_hands[i].bet(self.__players[i].get_bet(info))
             for i in range(self.__player_count):
                 for j in range(2):
+                    
+                    # TODO: check if players have a blackjack if so win them
+                    
                     self.__player_hands[i].add_to_hand(self.__game_deck.deal_card())
             # deal for dealer
             self.__dealer_hand.add_to_hand(self.__game_deck.deal_card())
-            
-            if self.__dealer_hand._sum_cards([self.__dealer_hand.get_upCard, self.__game_deck.reserve_dealer()])[1:] == "21":
+            self.__game_deck.reserve_dealer()
+            if self.__dealer_hand.get_upCard() == "A":
+                if self.__insurence_scam101():
+                    self.__dealer_hand.add_to_hand(self.__game_deck.reveal_dealer())
+                    return "BJ Loss"
+            self.__roll = 0
                 
-    
+    def __insurence_scam101(self):
+        insured_indexes = []
+        for i in range(self.__player_count):
+            if self.__players[i].check_insurence(self._get_info(i)):
+                insured_indexes.append(i)
+        if self.__dealer_hand._sum_cards([self.__dealer_hand.get_upCard, self.__game_deck.dealer_card])[1:] == "21":
+            for i in range(self.__player_count):
+                if i in insured_indexes:
+                    self.__players[i].funds += self.__player_hands[i].bet
+            return True
+        else:
+            for i in range(self.__player_count):
+                if i in insured_indexes:
+                    self.__players[i].funds -= self.__player_hands[i].bet/2
+            return False
     def __kick(self, index):
         self.__players[index].kick(self.__game_number)
         self.__players.pop(index)
@@ -162,7 +186,7 @@ class BlackJackGame(SGame):
         self.__player_count -= 1
     
     def _get_info(self, index):
-        return [self.__game_deck.get_used_cards(), self.__player_hands[index], self.__dealer_hand.get_upCard, self.__player_count, index, self.__game_number]
+        return [self.__game_deck.get_used_cards(), self.__player_hands[index].get_cards(), self.__dealer_hand.get_cards(), self.__player_count, index+1, self.__game_number]
     
     def get_game_number(self):
         return self.__game_number
