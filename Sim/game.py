@@ -30,6 +30,7 @@ class Deck(SDeck):
         self.__deck = self._DECK * self.__deck_count
         shuffle(self.__deck)
         self.__used_deck = []
+        self.decks_used += 1
     def deal_card(self):
         card = self.__deck[-1]
         self.__used_deck.append(self.__deck[-1])
@@ -53,9 +54,10 @@ class Deck(SDeck):
     # Initial
     def __init__(self, deck_count=1) -> None:
         if deck_count not in self._VIABLE_DECKS:
-            raise Exception(f"{deck_count} is not a valid deck")
+            raise Exception(f"1")
         self.__deck_count = deck_count
         self._shuffle()
+        self.decks_used = 0
 
 # hand class to handle hands:
 class Hand(object):
@@ -64,7 +66,7 @@ class Hand(object):
         values = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 10, 'Q': 10, 'K': 10, 'A': 0}
         for card in hand:
             if card not in values:
-                raise Exception("Soething went wrong with card mapping")
+                raise Exception("2")
         total_value = sum(values[card] for card in hand)
         has_ace = 'A' in hand
 
@@ -93,10 +95,11 @@ class Hand(object):
         if int(name[1:]) > 21:
             return True
         return False
+    def bet(self, sum):
+        self.bet = sum
     # init
-    def __init__(self, cards, bet = 0) -> None:
-        self._cards = cards
-        self.bet = bet
+    def __init__(self) -> None:
+        self._cards = []
         
 class DealerHand(Hand):
     def get_upCard(self):
@@ -109,12 +112,16 @@ class BlackJackGame(SGame):
     
     def _check_players(self):
         if self.__player_count > self._MAXIMUM_PLAYERS or self.__player_count <=0:
-            raise Exception(f"Maximum number of players exceeded: {self.__player_count}") 
+            raise Exception(f"3") 
     
     # 1 step of game
     def itterate(self):
         if self.__roll == self.__player_count:
-            self.__roll = -1
+            self.__roll = 0
+            # round up the last game: reveal delers card, check for win and push, clear all hands
+            
+            # TODO play the dealers cards
+            self.__dealer_hand.add_to_hand(self.__game_deck.reveal_dealer())
             dealer_total = self.__dealer_hand.get_cards()[:1]
             for i in range(self.__player_count):
                 player_total = self.__player_hands[i].get_cards()[1:]
@@ -123,10 +130,40 @@ class BlackJackGame(SGame):
                 elif player_total == dealer_total and not self.__player_hands[i].is_bust():
                     self.__players[i].funds += self.__player_hands[i].bet
                 self.__player_hands[i].clear()
-                self.__dealer_hand.clear()
-                self.__game_number += 1
-                
+                # check if any players have 0 funds, if so kick from the game
+                if self.__players[i].funds <= 0:
+                    self.__kick(i)
+            self.__dealer_hand.clear()
+            self.__game_number += 1
             
+            # check if there are players
+            if self.__player_count == 0:
+                raise Exception("0")
+            
+            # check for cut card and reshuffle if so
+            self.__game_deck.check_for_cut()
+            # deal new round: ask ewery player for new bets, deal to dealer and other hands
+            for i in range(self.__player_count):
+                info = self._get_info(i)
+                self.__player_hands[i].bet(self.__players[i].get_bet(info))
+            for i in range(self.__player_count):
+                for j in range(2):
+                    self.__player_hands[i].add_to_hand(self.__game_deck.deal_card())
+            # deal for dealer
+            self.__dealer_hand.add_to_hand(self.__game_deck.deal_card())
+            
+            if self.__dealer_hand._sum_cards([self.__dealer_hand.get_upCard, self.__game_deck.reserve_dealer()])[1:] == "21":
+                
+    
+    def __kick(self, index):
+        self.__players[index].kick(self.__game_number)
+        self.__players.pop(index)
+        self.__player_hands.pop(index)
+        self.__player_count -= 1
+    
+    def _get_info(self, index):
+        return [self.__game_deck.get_used_cards(), self.__player_hands[index], self.__dealer_hand.get_upCard, self.__player_count, index, self.__game_number]
+    
     def get_game_number(self):
         return self.__game_number
     # initial
@@ -141,5 +178,5 @@ class BlackJackGame(SGame):
         # build
         self.__roll = 0
         for i in range(self.__player_count):
-            self.__player_hands.append(Hand([], 0)) # initiate emty hands
-        self.__dealer_hand = DealerHand([])
+            self.__player_hands.append(Hand()) # initiate emty hands
+        self.__dealer_hand = DealerHand()
