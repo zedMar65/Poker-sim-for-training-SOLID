@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-
+import os
 # clear later
 def HLcount(cards):
     count = 0
@@ -13,13 +13,13 @@ def HLcount(cards):
 # default class
 class SBot(ABC):
     @abstractmethod
-    def play(hand) -> str:
+    def play(self, info) -> str:
         pass
     @abstractmethod
-    def get_bet(info) -> int:
+    def get_bet(self, info) -> int:
         pass
     @abstractmethod
-    def kick(info) -> None:
+    def kick(self, info) -> None:
         pass
 
 class DealerBot():
@@ -41,7 +41,8 @@ class DealerBot():
 
 
 class PlayerBot(SBot):
-    def __init__(self, funds):
+    def __init__(self, funds, name):
+        self.name = name
         self.funds = funds
         # Strategy mappings
         self.hard_totals = {
@@ -56,7 +57,9 @@ class PlayerBot(SBot):
             "5": "N", "4": "H", "3": "H", "2": "H"
         }
 
-    def play(self, player_hand, dealer_hand):
+    def play(self, info):
+        player_hand = info["p_cards"]
+        dealer_hand = info["d_cards"]
         dealer_total = int(dealer_hand[1:])
         player_type = player_hand[0]
         player_total = int(player_hand[1:])
@@ -73,6 +76,7 @@ class PlayerBot(SBot):
     def get_bet(self, info):
         bet = self.funds/100
         self.funds -= bet
+        self.last_bet = bet
         return bet
     def _get_hard_action(self, player_total, dealer_total):
         if player_total >= 17:
@@ -88,11 +92,20 @@ class PlayerBot(SBot):
         elif player_total == 12:
             return "H" if dealer_total in [2, 3, 7, 8, 9, 10, 11] else "S"
         elif player_total == 11:
-            return "D"
+            if self.last_bet >= self.funds:
+                return "D"
+            else:
+                return "H"
         elif player_total == 10:
-            return "D" if dealer_total < 10 else "H"
+            if self.last_bet >= self.funds:
+                return "D" if dealer_total < 10 else "H"
+            else:
+                return "H"
         elif player_total == 9:
-            return "D" if dealer_total in [3, 4, 5, 6] else "H"
+            if self.last_bet >= self.funds:
+                return "D" if dealer_total in [3, 4, 5, 6] else "H"
+            else:
+                return "H"
         else:
             return "H"
 
@@ -109,56 +122,134 @@ class PlayerBot(SBot):
         elif player_total == 17:
             return "S" if dealer_total in [3, 4, 5, 6] else "H"
         elif player_total == 16:
-            return "D" if dealer_total in [4, 5, 6] else "H"
+            if self.last_bet >= self.funds:
+                return "D" if dealer_total in [4, 5, 6] else "H"
+            else:
+                return "H"
         elif player_total == 15:
-            return "D" if dealer_total in [4, 5, 6] else "H"
+            if self.last_bet >= self.funds:
+                return "D" if dealer_total in [4, 5, 6] else "H"
+            else:
+                return "H"
         elif player_total == 14:
-            return "D" if dealer_total in [4, 5, 6] else "H"
+            if self.last_bet >= self.funds:
+                return "D" if dealer_total in [4, 5, 6] else "H"
+            else:
+                return "H"
         elif player_total == 13:
-            return "D" if dealer_total in [4, 5, 6] else "H"
+            if self.last_bet >= self.funds:
+                return "D" if dealer_total in [4, 5, 6] else "H"
+            else:
+                return "H"
         else:
             return "H"
 
     def _get_pair_action(self, pair_value, dealer_total):
         if pair_value == "A":
-            return "Y"
+            if self.last_bet <= self.funds:
+                return "Y" if dealer_total < 7 else "H"
+            else:
+                return "H"
         elif pair_value == "T":
-            return "N"
-        elif pair_value == "9":
-            return "Y" if dealer_total != 7 and dealer_total != 10 and dealer_total != 11 else "S"
+            if self.last_bet <= self.funds:
+                return "D"
+            else:
+                return "H"
         elif pair_value == "8":
-            return "Y"
-        elif pair_value == "7":
-            return "Y" if dealer_total < 8 else "H"
+            return "H"
         elif pair_value == "6":
-            return "Y" if dealer_total < 7 else "H"
-        elif pair_value == "5":
-            return "D" if dealer_total < 10 else "H"
+            if dealer_total < 7 and self.last_bet <= self.funds:
+                return "Y"
+            else:
+                return "H"
         elif pair_value == "4":
-            return "H" if dealer_total in [5, 6] else "H"
-        elif pair_value == "3":
-            return "H" if dealer_total < 8 else "H"
-        elif pair_value == "2":
-            return "H" if dealer_total < 8 else "H"
+            if dealer_total < 7 and self.last_bet <= self.funds:
+                return "Y"
+            else:
+                return "H"
         else:
             return "H"
     def kick(self, info):
         print(f"Run out of funds: {info}")
+    def check_insurence(self, info):
+        return False
+        pass
 
 # playable class
-class HumanBot(SBot):
+class HumanBotWithCount(SBot):
+    def __init__(self, funds, name):
+        self.name = name
+        self.funds = funds
+        
     def play(self, info):
+        command = 'cls' if os.name == 'nt' else 'clear'
+        os.system(command)
         print(f"Your hand: {info['p_cards']}")
         print(f"Dealer's hand: {info['d_cards']}")
-        print(f"Count: {HLcount(info["cards"])}")
-        action = input("Enter action (H, S, D, Y, N): ")
+        print(f"Count: {HLcount(info['cards'])}")
+        print(f"Cards used: {len(info['cards'])}/{52*info['deck_game']}")
+        print(f"Funds: {self.funds}")
+
+        action = input("Enter action (H(hit), S(stand), D(double), Y(split)): ")
         return action
 
     def get_bet(self, info):
-        print(info)
-        print(f"Count: {HLcount(info["cards"])}")
+        command = 'cls' if os.name == 'nt' else 'clear'
+        os.system(command)
+        print(f"Count: {HLcount(info['cards'])}")
+        print(f"Cards used: {len(info['cards'])}/{52*info['deck_game']}")
+        print(f"Funds: {self.funds}")
         bet = int(input("Enter bet: "))
+        self.funds -= bet
         return bet
 
     def kick(self, info):
+        command = 'cls' if os.name == 'nt' else 'clear'
+        os.system(command)
+        print(f"Game over, info: \n{info}\nFunds: {self.funds}")
+        
+    def check_insurence(self, info):
+        command = 'cls' if os.name == 'nt' else 'clear'
+        os.system(command)
+        print(f"Dealer's hand: {info['d_cards']}")
+        print(f"Count: {HLcount(info['cards'])}")
+        print(f"Cards used: {len(info['cards'])}/{52*info['deck_game']}")
+        print(f"Funds: {self.funds}")
+        action = input("Do you want to insure? (Y/N): ")
+        return True if action == "Y" else False
+class HumanBot(SBot):
+    def __init__(self, funds, name):
+        self.name = name
+        self.funds = funds
+        
+    def play(self, info):
+        command = 'cls' if os.name == 'nt' else 'clear'
+        os.system(command)
+        print(f"Your hand: {info['p_cards']}")
+        print(f"Dealer's hand: {info['d_cards']}")
+        print(f"Table cards: {info['table_cards']}")
+        print(f"Funds: {self.funds}")
+        action = input("Enter action (H(hit), S(stand), D(double), Y(split)): ")
+        return action
+
+    def get_bet(self, info):
+        command = 'cls' if os.name == 'nt' else 'clear'
+        os.system(command)
+        print(f"Funds: {self.funds}")
+        bet = int(input("Enter bet: "))
+        self.funds -= bet
+        return bet
+
+    def kick(self, info):
+        command = 'cls' if os.name == 'nt' else 'clear'
+        os.system(command)
         print(f"Game over, round: {info}, funds: {self.funds}")
+        
+    def check_insurence(self, info):
+        command = 'cls' if os.name == 'nt' else 'clear'
+        os.system(command)
+        print(f"Dealer's hand: {info['d_cards']}")
+        print(f"Table cards: {info['table_cards']}")
+        print(f"Funds: {self.funds}")
+        action = input("Do you want to insure? (Y/N): ")
+        return True if action == "Y" else False
