@@ -75,7 +75,7 @@ class Hand(object):
             if hand[0] == 'A':
                 return "P2"
             return "P" + str(total_value)
-        if has_ace and total_value == 10:
+        if has_ace and total_value == 10 and len(hand) == 2:
             return "B21"
         if has_ace and total_value <= 10:
             return "S" + str(total_value+11)
@@ -95,7 +95,7 @@ class Hand(object):
         if int(name[1:]) > 21:
             return True
         return False
-    def bet(self, sum):
+    def bet_m(self, sum):
         self.bet = sum
     # init
     def __init__(self) -> None:
@@ -118,24 +118,39 @@ class BlackJackGame(SGame):
     def itterate(self):
         
         # TODO: add split support and add player turns
+        for i in self.__player_count:
+            player = self.__players[i]
+            hand = self.__player_hands[i]
+            if i in self.__dead_players:
+                continue
+            
         
         if self.__roll == self.__player_count:
             # round up the last game: reveal delers card, check for win and push, clear all hands
             
-            # TODO play the dealers cards
+            # reveal dealer cards
+            self.__dealer_hand.add_to_hand(self.__game_deck.reveal_dealer())
             
+            while not self.__dealer_hand.is_bust() and self.__dealer_hand.get_cards()[1:] != "21" and self.__dealer_hand.get_cards() != "B21":
+                if self.__dealer_hand.get_cards()[1:] > 16 and self.__dealer_hand.get_cards()[0] != "S":
+                    break
+                if self.__dealer_hand.get_cards()[1:] > 17:
+                    break
+                self.__dealer_hand.add_to_hand(self.__game_deck.deal_card())
+            # check for win
             self.__dealer_hand.add_to_hand(self.__game_deck.reveal_dealer())
             dealer_total = self.__dealer_hand.get_cards()[:1]
             for i in range(self.__player_count):
-                player_total = self.__player_hands[i].get_cards()[1:]
-                if player_total > dealer_total and not self.__player_hands[i].is_bust():
-                    self.__players[i].funds += 2*self.__player_hands[i].bet
-                elif player_total == dealer_total and not self.__player_hands[i].is_bust():
-                    self.__players[i].funds += self.__player_hands[i].bet
-                self.__player_hands[i].clear()
-                # check if any players have 0 funds, if so kick from the game
-                if self.__players[i].funds <= 0:
-                    self.__kick(i)
+                if i not in self.__dead_players:
+                    player_total = self.__player_hands[i].get_cards()[1:]
+                    if player_total > dealer_total and not self.__player_hands[i].is_bust():
+                        self.__players[i].funds += 2*self.__player_hands[i].bet
+                    elif player_total == dealer_total and not self.__player_hands[i].is_bust():
+                        self.__players[i].funds += self.__player_hands[i].bet
+                    self.__player_hands[i].clear()
+                    # check if any players have 0 funds, if so kick from the game
+                    if self.__players[i].funds <= 0:
+                        self.__kick(i)
             self.__dealer_hand.clear()
             self.__game_number += 1
             
@@ -147,14 +162,15 @@ class BlackJackGame(SGame):
             self.__game_deck.check_for_cut()
             # deal new round: ask ewery player for new bets, deal to dealer and other hands
             for i in range(self.__player_count):
-                info = self._get_info(i)
-                self.__player_hands[i].bet(self.__players[i].get_bet(info))
+                if i not in self.__dead_players:
+                    info = self._get_info(i)
+                    self.__player_hands[i].bet(self.__players[i].get_bet(info))
             for i in range(self.__player_count):
-                for j in range(2):
-                    
-                    # TODO: check if players have a blackjack if so win them
-                    
-                    self.__player_hands[i].add_to_hand(self.__game_deck.deal_card())
+                if i not in self.__dead_players:
+                    for j in range(2):
+                        self.__player_hands[i].add_to_hand(self.__game_deck.deal_card())
+                    if self.__player_hands[i].get_cards[1:] == "21":
+                        self.__players[i].funds += self.__player_hands[i].bet/2*3
             # deal for dealer
             self.__dealer_hand.add_to_hand(self.__game_deck.deal_card())
             self.__game_deck.reserve_dealer()
@@ -167,26 +183,34 @@ class BlackJackGame(SGame):
     def __insurence_scam101(self):
         insured_indexes = []
         for i in range(self.__player_count):
-            if self.__players[i].check_insurence(self._get_info(i)):
-                insured_indexes.append(i)
+            if i not in self.__dead_players:
+                if self.__players[i].check_insurence(self._get_info(i)):
+                    insured_indexes.append(i)
         if self.__dealer_hand._sum_cards([self.__dealer_hand.get_upCard, self.__game_deck.dealer_card])[1:] == "21":
-            for i in range(self.__player_count):
-                if i in insured_indexes:
-                    self.__players[i].funds += self.__player_hands[i].bet
+            if i not in self.__dead_players:
+                for i in range(self.__player_count):
+                    if i in insured_indexes:
+                        self.__players[i].funds += self.__player_hands[i].bet_m
             return True
         else:
             for i in range(self.__player_count):
-                if i in insured_indexes:
-                    self.__players[i].funds -= self.__player_hands[i].bet/2
+                if i not in self.__dead_players:
+                    if i in insured_indexes:
+                        self.__players[i].funds -= self.__player_hands[i].bet_m/2
             return False
     def __kick(self, index):
         self.__players[index].kick(self.__game_number)
-        self.__players.pop(index)
-        self.__player_hands.pop(index)
-        self.__player_count -= 1
+        self.__dead_players.append(index)
     
     def _get_info(self, index):
-        return [self.__game_deck.get_used_cards(), self.__player_hands[index].get_cards(), self.__dealer_hand.get_cards(), self.__player_count, index+1, self.__game_number]
+        return {
+            "cards": self.__game_deck.get_used_cards(), 
+            "p_cards": self.__player_hands[index].get_cards(), 
+            "d_cards": self.__dealer_hand.get_cards(), 
+            "p_count": self.__player_count,
+            "pos": index+1, 
+            "num": self.__game_number
+            }
     
     def get_game_number(self):
         return self.__game_number
@@ -194,6 +218,7 @@ class BlackJackGame(SGame):
     def __init__(self, players, deck_count=1) -> None:
         # pre-build
         self.__game_number = 0
+        self.__dead_players = []
         self.__players = players
         self.__player_count = len(players)
         self._check_players() 

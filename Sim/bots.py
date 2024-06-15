@@ -1,13 +1,28 @@
 from abc import ABC, abstractmethod
 
+# clear later
+def HLcount(cards):
+    count = 0
+    for card in cards:
+        if card in ['2', '3', '4', '5', '6']:
+            count += 1
+        elif card in ['10', 'J', 'Q', 'K', 'A']:
+            count -= 1
+    return count
+
 # default class
 class SBot(ABC):
     @abstractmethod
     def play(hand) -> str:
         pass
+    @abstractmethod
+    def get_bet(info) -> int:
+        pass
+    @abstractmethod
+    def kick(info) -> None:
+        pass
 
-class DealerBot(SBot):
-    @staticmethod
+class DealerBot():
     def play(hand):
         hand_type = hand[0]
         total = int(hand[1:])
@@ -55,7 +70,10 @@ class PlayerBot(SBot):
             return self._get_pair_action(pair_value, dealer_total)
         else:
             raise ValueError("Invalid hand type")
-
+    def get_bet(self, info):
+        bet = self.funds/100
+        self.funds -= bet
+        return bet
     def _get_hard_action(self, player_total, dealer_total):
         if player_total >= 17:
             return "S"
@@ -124,3 +142,23 @@ class PlayerBot(SBot):
             return "H" if dealer_total < 8 else "H"
         else:
             return "H"
+    def kick(self, info):
+        print(f"Run out of funds: {info}")
+
+# playable class
+class HumanBot(SBot):
+    def play(self, info):
+        print(f"Your hand: {info['p_cards']}")
+        print(f"Dealer's hand: {info['d_cards']}")
+        print(f"Count: {HLcount(info["cards"])}")
+        action = input("Enter action (H, S, D, Y, N): ")
+        return action
+
+    def get_bet(self, info):
+        print(info)
+        print(f"Count: {HLcount(info["cards"])}")
+        bet = int(input("Enter bet: "))
+        return bet
+
+    def kick(self, info):
+        print(f"Game over, round: {info}, funds: {self.funds}")
