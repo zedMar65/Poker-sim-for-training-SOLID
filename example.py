@@ -1,14 +1,12 @@
-<<<<<<< HEAD
-from Sim.game import BlackJackGame
-from Sim.bots import HumanBot, PlayerBot, HumanBotWithCount
+from Library.game import BlackJackGame
+from Library.bots import HumanBot, PlayerBot, HumanBotWithCount
 
 import os
 import time
 
 
 try:
-    print("THIS IS ONLY EXAMPLE USAGE OF THE CLASS, IT IS NOT THE FULL PRODUCT")
-
+    print("Simple example of using the library")
     deck_count = int(input("Enter number of decks: "))
     funds = int(input("Enter funds: "))
     table = BlackJackGame([], deck_count)
@@ -37,6 +35,6 @@ try:
             print("\n"+table.normal_info())
 except KeyboardInterrupt:
     print("\nGame over")
-# except Exception as e:
-#     print(e)
-#     time.sleep(10)
+except Exception as e:
+    print(e)
+    time.sleep(10)

@@ -1,4 +1,2 @@
-PyInstaller --onefile ./example.py
-copy /y dist\example.exe .\example.exe
-del __pycache__
-del PokerTestGame.exe.spec
+PyInstaller --onefile example.py
+copy dist\example.exe .\example.exe
