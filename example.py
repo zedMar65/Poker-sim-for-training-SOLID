@@ -1,5 +1,5 @@
-from Library.game import BlackJackGame
-from Library.bots import HumanBot, PlayerBot, HumanBotWithCount
+from Library.game import BlackJackGame, CodeError
+from Library.game import HumanBot, PlayerBot, HumanBotWithCount
 
 import os
 import time
@@ -9,7 +9,7 @@ try:
     print("Simple example of using the library")
     deck_count = int(input("Enter number of decks: "))
     funds = int(input("Enter funds: "))
-    table = BlackJackGame([], deck_count)
+    table = BlackJackGame([], deck_count, False, 60)
     if input("Play with card counting help or not? (y/n): ") == "y":
         table.add_player(HumanBotWithCount(funds, "You"))
     else:
@@ -23,8 +23,8 @@ try:
         data = input("Enter action (i - next, q - quit, f - info): ")
         if data == "i":
             info = table.itterate()
-            if info == "Game over":
-                print(info)
+            if isinstance(info, int):
+                print(f"Game over, info: {CodeError(info)}")
                 break
             command = 'cls' if os.name == 'nt' else 'clear'
             os.system(command)
