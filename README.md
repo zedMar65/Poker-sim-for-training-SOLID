@@ -1,3 +1,4 @@
+#### This README is still not finished, if yo wish to use this class, good luck
 # BlackJack class
 ---
 ### Overview
