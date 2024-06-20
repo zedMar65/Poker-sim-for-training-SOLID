@@ -1,9 +1,7 @@
 # For testing and publishing purposes
 setup.py
-
-*.exe
 *.bat
-
+*.exe
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
