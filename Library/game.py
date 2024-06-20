@@ -2,6 +2,26 @@ from abc import ABC, abstractmethod
 from random import shuffle
 import os
 
+
+def CodeError(code):
+    if code == 0:
+        return "Not enough funds for double"
+    elif code == 1:
+        return "Can't double after hit"
+    elif code == 2:
+        return "Can't split non-pair"
+    elif code == 3:
+        return "Not enough funds for split"
+    elif code == 4:
+        return "Invalid action"
+    elif code == 5:
+        return "Dealer has blackjack, new game"
+    elif code == 6:
+        return "Deck has been reshuffled"
+    elif code == 7:
+        return "Game over"
+    else:
+        return "Unknown error"
 # Default class
 class SDeck(ABC):
     @abstractmethod
@@ -45,6 +65,8 @@ class SBot(ABC):
         pass
     @abstractmethod
     def get_bet(self, info) -> int:
+        bet = 0
+        self.funds -= bet
         pass
     @abstractmethod
     def kick(self, info) -> None:
