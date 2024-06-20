@@ -1,1 +1,3 @@
 python setup.py sdist bdist_wheel
+@REM api: pypi-AgEIcHlwaS5vcmcCJGI2YjM4MDQ0LWMxYmUtNDI2Mi04NGQ2LTRjZGM5ZjQxYjc4MQACKlszLCI1OWE4Yzc3ZC0xODg5LTQyNDMtOWU3Yi03MDU3NmFhZDkyMmEiXQAABiDQB-aK9nryGHbkfXVk3P3B5fkWxQw4H2NhhOJWVdBFSg
+twine upload dist/*

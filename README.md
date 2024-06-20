@@ -13,7 +13,6 @@ Or
 `
 pip install BlackJackTable 
 `
-<span style="color:red"><b>Still not a public library</b></span>
 
 ---
 ### Usage
@@ -229,7 +228,7 @@ class HumanBot(SBot):
 ---
 
 ##### ToDo
-- [x] Publish v1.0
+- [ ] Publish v1.0
 - [ ] Set up a python lybrary
 - [ ] Set up docker
 
