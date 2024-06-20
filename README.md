@@ -233,4 +233,3 @@ class HumanBot(SBot):
 - [ ] Set up docker
 
 ---
-<span style="font-family: 'Courier New', monospace;">The end</span>
