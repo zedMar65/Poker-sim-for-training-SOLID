@@ -1,5 +1,5 @@
-from Library.game import BlackJackGame, CodeError
-from Library.game import HumanBot, PlayerBot
+from BlackJackTable import BlackJackGame, CodeError
+from BlackJackTable import HumanBot, PlayerBot
 import time
 
 table = BlackJackGame([

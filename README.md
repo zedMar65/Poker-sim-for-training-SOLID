@@ -11,7 +11,7 @@ Either
 Or
 * Install BlackJackTable with:
 `
-pip3 install BlackJackTable 
+pip install BlackJackTable 
 `
 <span style="color:red"><b>Still not a public library</b></span>
 

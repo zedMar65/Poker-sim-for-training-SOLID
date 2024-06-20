@@ -1,2 +1,1 @@
-PyInstaller --onefile example.py
-copy dist\example.exe .\example.exe
+python setup.py sdist bdist_wheel
