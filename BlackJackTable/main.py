@@ -285,6 +285,7 @@ class HumanBot(SBot):
 
     def get_bet(self, info):
         command = 'cls' if os.name == 'nt' else 'clear'
+        print("-")
         os.system(command)
         print(f"Funds: {self.funds}")
         bet = int(input("Enter bet: "))
